@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp.*
+.yarn/
+!.yarn/patches/
+!.yarn/plugins/
+!.yarn/releases/
+!.yarn/versions/
+
+# Build output and caches
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.vercel/
+.netlify/
+.cache/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+credentials.json
+secrets.json
+
+# Logs and local files
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
