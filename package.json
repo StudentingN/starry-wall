@@ -1,0 +1,13 @@
+{
+  "name": "starry-wall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "今夜留一句 · a local-first graffiti and wishing wall",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test",
+    "test:browser": "node scripts/browser-smoke.mjs"
+  }
+}

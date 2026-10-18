@@ -1,0 +1,23 @@
+const paths = {
+  pen: '<path d="m15 4 5 5M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/>',
+  text: '<path d="M4 5h16M12 5v15M8 20h8M4 5v3M20 5v3"/>',
+  move: '<path d="M12 3v18M3 12h18m-12-6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3m12-6 3 3-3 3"/>',
+  grid: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+  settings: '<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  home: '<path d="M4 10 12 3l8 7v10H4zM9 20v-7h6v7"/>',
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+  undo: '<path d="m8 5-5 5 5 5M3 10h11a6 6 0 0 1 0 12"/>',
+  redo: '<path d="m16 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12"/>',
+  star: '<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.3 9.4l6.1-.9z"/>',
+  heart: '<path d="M20 5c-2-2-6-2-8 2-2-4-6-4-8-2s-2 5 0 7l8 8 8-8c2-2 2-5 0-7Z"/>',
+  play: '<path d="m9 5 11 7-11 7z"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
+  trash: '<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',
+  volume: '<path d="m3 9 4 0 5-5v16l-5-5H3zM16 8a6 6 0 0 1 0 8"/>',
+  soundoff: '<path d="m3 9 4 0 5-5v16l-5-5H3zM17 9l5 6m0-6-5 6"/>',
+};
+export function icon(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.star) + '</svg>'; }
+export function hydrateIcons(root = document) { root.querySelectorAll('[data-icon]').forEach(node => node.innerHTML = icon(node.dataset.icon)); }

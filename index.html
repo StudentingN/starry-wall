@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17191b">
+  <meta name="description" content="今夜留一句。一面可以留下心事、涂鸦与祝福的星空墙。">
+  <title>今夜留一句 · Starry Wall</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="今夜留一句，回到首页"><span class="brand-mark">✳</span><span><strong>今夜留一句</strong><small>STARRY WALL</small></span></a>
+    <div class="header-caption"><span class="tiny-star">✦</span> SOME WORDS DESERVE A LITTLE SKY</div>
+    <nav class="header-actions" aria-label="页面功能">
+      <button id="danmaku-toggle" class="quiet-button"><span data-icon="play"></span><span class="button-label">弹幕时刻</span></button>
+      <button id="settings-open" class="icon-button" aria-label="偏好设置" title="偏好设置"><span data-icon="settings"></span></button>
+    </nav>
+  </header>
+  <main>
+    <section class="intro" aria-label="欢迎来到星空墙">
+      <div><p class="eyebrow"><span></span> 一面墙，装下所有未完待续</p><h1>把没说出口的，<br>留给这片<span>星空。</span></h1></div>
+      <p class="intro-note">随手写，随心画。<br>也许你的某一句，<br>会成为别人的小小星光。<span>✧</span></p>
+    </section>
+    <div id="wall" class="wall" role="region" aria-label="涂鸦墙，拖动浏览，滚轮缩放；方向键移动，Home 回到中心" tabindex="0">
+      <canvas id="wall-canvas" aria-hidden="true"></canvas>
+      <div id="world-layer" class="world-layer"></div>
+      <div class="wall-edge edge-left" aria-hidden="true"></div><div class="wall-edge edge-right" aria-hidden="true"></div>
+    </div>
+    <div id="mode-hint" class="mode-hint">拖动墙面，遇见一句心事 <span>↔</span></div>
+    <aside class="zoom-controls" aria-label="墙面缩放">
+      <button id="zoom-in" class="icon-button" aria-label="放大"><span data-icon="plus"></span></button>
+      <output id="zoom-value" aria-label="当前缩放比例">100%</output>
+      <button id="zoom-out" class="icon-button" aria-label="缩小"><span data-icon="minus"></span></button>
+      <span class="control-divider"></span>
+      <button id="center-view" class="icon-button" aria-label="回到墙面中心"><span data-icon="home"></span></button>
+    </aside>
+    <div id="draw-tools" class="draw-tools" hidden>
+      <div id="brush-colors" class="color-picker" aria-label="画笔颜色"></div>
+      <div id="brush-widths" class="brush-widths" aria-label="画笔粗细"></div>
+      <span class="control-divider"></span>
+      <button id="undo" class="icon-button" aria-label="撤销笔画" disabled><span data-icon="undo"></span></button>
+      <button id="redo" class="icon-button" aria-label="重做笔画" disabled><span data-icon="redo"></span></button>
+      <button id="cancel-drawing" class="quiet-button">取消</button>
+      <button id="publish-drawing" class="primary-button small" disabled>发布涂鸦 <span data-icon="arrow"></span></button>
+    </div>
+    <nav class="creation-toolbar" aria-label="创作工具">
+      <button id="browse-mode" class="tool-button active" aria-pressed="true"><span data-icon="move"></span><span>漫游</span></button>
+      <span class="toolbar-divider"></span>
+      <button id="compose-open" class="primary-button"><span data-icon="text"></span><span>留下文字</span><span class="keyboard-hint">T</span></button>
+      <button id="draw-mode" class="tool-button" aria-pressed="false"><span data-icon="pen"></span><span>随手涂鸦</span></button>
+      <span class="toolbar-divider"></span>
+      <button id="collection-open" class="tool-button"><span data-icon="grid"></span><span>我的作品</span></button>
+    </nav>
+  </main>
+  <footer class="page-footer"><span id="storage-status"><i></i> 只留在你的浏览器里</span><span class="footer-note">给平凡的一天，留一个浪漫的注脚。</span><span class="edition">LOCAL EDITION · 01</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="danmaku-layer" class="danmaku-layer" aria-hidden="true"></div>
+  <section id="celebration" class="celebration" aria-label="祝福特效" hidden>
+    <canvas id="effects-canvas" aria-hidden="true"></canvas>
+    <div id="blessing-echoes" aria-hidden="true"></div>
+    <div class="celebration-label"><span>✦</span><p>把这一句祝福，送给整片星空</p></div>
+    <button id="skip-effect" class="quiet-button">跳过特效 <span data-icon="arrow"></span></button>
+  </section>
+  <dialog id="composer" class="modal composer">
+    <form id="compose-form" novalidate>
+      <div class="modal-header"><div><p class="eyebrow">LEAVE A LITTLE LIGHT</p><h2>今晚，想留下什么？</h2></div><button type="button" class="icon-button" data-close="composer" aria-label="关闭文字编辑"><span data-icon="close"></span></button></div>
+      <label class="sr-only" for="message">你的留言，最多 120 字</label>
+      <textarea id="message" rows="5" maxlength="240" placeholder="一个念头，一句喜欢，或一个小小的愿望……"></textarea>
+      <div class="editor-meta"><span id="blessing-hint">每一句平常的话，也有它的光。</span><output id="character-count" for="message">0 / 120</output></div>
+      <fieldset><legend>给这句话一种心情</legend><div class="segments" id="category-picker"><button type="button" data-category="daily" aria-pressed="true">日常碎片</button><button type="button" data-category="love" aria-pressed="false">悄悄表白</button><button type="button" data-category="blessing" aria-pressed="false">送出祝福</button></div></fieldset>
+      <fieldset><legend>挑一抹颜色</legend><div id="text-colors" class="color-picker"></div></fieldset>
+      <fieldset id="effect-field" hidden><legend>让祝福怎样抵达？</legend><div class="effect-options"><button type="button" data-effect="meteors" aria-pressed="true"><span>☄</span>流星雨</button><button type="button" data-effect="fireworks" aria-pressed="false"><span>✺</span>烟花</button><button type="button" data-effect="none" aria-pressed="false"><span>✧</span>安静留下</button></div></fieldset>
+      <p id="compose-error" class="inline-error" role="alert" hidden></p>
+      <div class="modal-footer"><span>仅保存在当前浏览器</span><button id="publish-text" class="primary-button" type="submit">留在墙上 <span data-icon="arrow"></span></button></div>
+    </form>
+  </dialog>
+  <dialog id="detail" class="modal detail">
+    <div class="modal-header"><p id="detail-meta" class="eyebrow"></p><button class="icon-button" data-close="detail" aria-label="关闭作品"><span data-icon="close"></span></button></div>
+    <div id="detail-content"></div>
+    <div id="detail-actions" class="detail-actions"></div>
+    <p id="detail-error" class="inline-error" role="alert" hidden></p>
+  </dialog>
+  <dialog id="collection" class="modal collection">
+    <div class="modal-header"><div><p class="eyebrow">YOUR LITTLE UNIVERSE</p><h2>我的作品</h2></div><button class="icon-button" data-close="collection" aria-label="关闭我的作品"><span data-icon="close"></span></button></div>
+    <p class="muted">你留下的每一笔，都在这里。</p><div id="collection-list" class="collection-list"></div>
+  </dialog>
+  <dialog id="settings" class="modal settings">
+    <div class="modal-header"><div><p class="eyebrow">MAKE YOURSELF AT HOME</p><h2>这片星空，听你的</h2></div><button class="icon-button" data-close="settings" aria-label="关闭偏好设置"><span data-icon="close"></span></button></div>
+    <label class="setting-row"><span><strong>减少动态效果</strong><small>用轻柔淡入替代烟花和流星</small></span><input id="reduced-motion" type="checkbox" role="switch"></label>
+    <label class="setting-row"><span><strong>祝福音效</strong><small>默认关闭，仅在你主动开启后播放</small></span><input id="sound-enabled" type="checkbox" role="switch"></label>
+    <label class="setting-row"><span><strong>展示示例作品</strong><small>示例与自己的作品分别标记</small></span><input id="show-samples" type="checkbox" role="switch" checked></label>
+    <p class="local-notice"><span>✧</span> 这是本地试玩版。内容不会上传；不同设备、浏览器、无痕窗口之间不会同步。清除网站数据会删除作品。</p>
+    <p id="settings-error" class="inline-error" role="alert" hidden></p>
+  </dialog>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
