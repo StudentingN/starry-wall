@@ -8,20 +8,38 @@
   <title>今夜留一句 · Starry Wall</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="/src/globe.css">
 </head>
-<body>
+<body data-view="globe">
   <div class="ambient" aria-hidden="true"></div>
   <header class="masthead">
     <a class="brand" href="/" aria-label="今夜留一句，回到首页"><span class="brand-mark">✳</span><span><strong>今夜留一句</strong><small>STARRY WALL</small></span></a>
-    <div class="header-caption"><span class="tiny-star">✦</span> SOME WORDS DESERVE A LITTLE SKY</div>
+    <div class="header-caption"><span class="tiny-star">✦</span> A LITTLE WORLD OF WORDS</div>
     <nav class="header-actions" aria-label="页面功能">
+      <button id="global-collection" class="quiet-button"><span data-icon="grid"></span><span class="button-label">我的作品</span></button>
       <button id="danmaku-toggle" class="quiet-button"><span data-icon="play"></span><span class="button-label">弹幕时刻</span></button>
       <button id="settings-open" class="icon-button" aria-label="偏好设置" title="偏好设置"><span data-icon="settings"></span></button>
     </nav>
   </header>
   <main>
+    <section id="globe-scene" aria-label="星空地球仪">
+      <canvas id="space-stars" aria-hidden="true"></canvas>
+      <div class="globe-intro"><p class="eyebrow"><span></span> 世界很大，每一句都算数</p><h1>让每一座城，<br>都有一颗<span>小星光。</span></h1><p class="globe-description">写下心事，画点喜欢。<br>把想说的话，放在世界的某个角落。</p><div class="globe-legend"><span>✧</span> 标签藏着一座城的未完待续</div></div>
+      <div class="orbital-ring" aria-hidden="true"></div>
+      <div id="globe" class="globe-container" role="region"></div>
+      <div id="globe-fallback" class="globe-fallback" hidden><span>✧</span><h2>星球暂时休息一下</h2><p>仍可以搜索城市、进入留言墙。</p><button id="fallback-search" class="primary-button">从城市列表出发</button></div>
+      <button id="city-search-open" class="globe-search quiet-button"><span data-icon="search"></span><span>寻找一座城市……</span><kbd>⌘ K</kbd></button>
+      <div class="globe-actions"><button id="my-city" class="primary-button"><span data-icon="locate"></span><span>选择我的城市</span></button><button id="random-city" class="quiet-button"><span data-icon="star"></span> 随机遇见一座城</button></div>
+      <div class="globe-navigation" aria-label="地球视角"><button id="globe-zoom-in" class="icon-button" aria-label="靠近地球"><span data-icon="plus"></span></button><button id="globe-zoom-out" class="icon-button" aria-label="远离地球"><span data-icon="minus"></span></button><span class="control-divider"></span><button id="globe-reset" class="icon-button" aria-label="地球回到中国视角"><span data-icon="globe"></span></button></div>
+      <p class="globe-instructions">拖动探索地球 <span>·</span> 滚轮 / 双指靠近 <span>·</span> 点击标签遇见一座城</p>
+      <div id="draft-tray" class="draft-tray" hidden></div>
+      <aside id="city-preview" class="city-preview" hidden><button id="preview-close" class="icon-button" aria-label="关闭城市预览"><span data-icon="close"></span></button><span id="preview-icon" class="preview-icon">💌</span><p id="preview-path" class="eyebrow"></p><h2 id="preview-name"></h2><p id="preview-counts" class="muted"></p><button id="enter-city" class="primary-button">进入城市墙 <span data-icon="arrow"></span></button></aside>
+    </section>
+    <section id="city-scene" aria-label="城市留言墙" hidden>
+      <div class="city-breadcrumb"><button id="back-globe" class="quiet-button"><span data-icon="globe"></span> 返回地球</button><span>/</span><button id="switch-city" class="quiet-button">选择城市</button><span id="city-draft-note"></span></div>
+
     <section class="intro" aria-label="欢迎来到星空墙">
-      <div><p class="eyebrow"><span></span> 一面墙，装下所有未完待续</p><h1>把没说出口的，<br>留给这片<span>星空。</span></h1></div>
+      <div><p class="eyebrow"><span></span> <span id="city-hierarchy">一座城，收藏一些小心事</span></p><h1 id="city-heading">一座城的，<br><span>未完待续。</span></h1></div>
       <p class="intro-note">随手写，随心画。<br>也许你的某一句，<br>会成为别人的小小星光。<span>✧</span></p>
     </section>
     <div id="wall" class="wall" role="region" aria-label="涂鸦墙，拖动浏览，滚轮缩放；方向键移动，Home 回到中心" tabindex="0">
@@ -43,6 +61,7 @@
       <span class="control-divider"></span>
       <button id="undo" class="icon-button" aria-label="撤销笔画" disabled><span data-icon="undo"></span></button>
       <button id="redo" class="icon-button" aria-label="重做笔画" disabled><span data-icon="redo"></span></button>
+      <button id="drawing-marker" class="quiet-button">⭐ 涂鸦标签</button>
       <button id="cancel-drawing" class="quiet-button">取消</button>
       <button id="publish-drawing" class="primary-button small" disabled>发布涂鸦 <span data-icon="arrow"></span></button>
     </div>
@@ -54,8 +73,9 @@
       <span class="toolbar-divider"></span>
       <button id="collection-open" class="tool-button"><span data-icon="grid"></span><span>我的作品</span></button>
     </nav>
+    </section>
   </main>
-  <footer class="page-footer"><span id="storage-status"><i></i> 只留在你的浏览器里</span><span class="footer-note">给平凡的一天，留一个浪漫的注脚。</span><span class="edition">LOCAL EDITION · 01</span></footer>
+  <footer class="page-footer"><span id="storage-status"><i></i> 只留在你的浏览器里</span><span class="footer-note">给平凡的一天，留一个浪漫的注脚。</span><span class="edition">LOCAL EDITION · 02</span></footer>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <div id="danmaku-layer" class="danmaku-layer" aria-hidden="true"></div>
   <section id="celebration" class="celebration" aria-label="祝福特效" hidden>
@@ -68,8 +88,10 @@
     <form id="compose-form" novalidate>
       <div class="modal-header"><div><p class="eyebrow">LEAVE A LITTLE LIGHT</p><h2>今晚，想留下什么？</h2></div><button type="button" class="icon-button" data-close="composer" aria-label="关闭文字编辑"><span data-icon="close"></span></button></div>
       <label class="sr-only" for="message">你的留言，最多 120 字</label>
+      <button id="text-city-select" type="button" class="publish-city quiet-button"><span data-icon="locate"></span><span>选择发言城市</span><span>⌄</span></button>
       <textarea id="message" rows="5" maxlength="240" placeholder="一个念头，一句喜欢，或一个小小的愿望……"></textarea>
       <div class="editor-meta"><span id="blessing-hint">每一句平常的话，也有它的光。</span><output id="character-count" for="message">0 / 120</output></div>
+      <button id="text-marker" type="button" class="marker-summary quiet-button">💌 给留言一个可爱标签 <span>⌄</span></button>
       <fieldset><legend>给这句话一种心情</legend><div class="segments" id="category-picker"><button type="button" data-category="daily" aria-pressed="true">日常碎片</button><button type="button" data-category="love" aria-pressed="false">悄悄表白</button><button type="button" data-category="blessing" aria-pressed="false">送出祝福</button></div></fieldset>
       <fieldset><legend>挑一抹颜色</legend><div id="text-colors" class="color-picker"></div></fieldset>
       <fieldset id="effect-field" hidden><legend>让祝福怎样抵达？</legend><div class="effect-options"><button type="button" data-effect="meteors" aria-pressed="true"><span>☄</span>流星雨</button><button type="button" data-effect="fireworks" aria-pressed="false"><span>✺</span>烟花</button><button type="button" data-effect="none" aria-pressed="false"><span>✧</span>安静留下</button></div></fieldset>
@@ -85,7 +107,7 @@
   </dialog>
   <dialog id="collection" class="modal collection">
     <div class="modal-header"><div><p class="eyebrow">YOUR LITTLE UNIVERSE</p><h2>我的作品</h2></div><button class="icon-button" data-close="collection" aria-label="关闭我的作品"><span data-icon="close"></span></button></div>
-    <p class="muted">你留下的每一笔，都在这里。</p><div id="collection-list" class="collection-list"></div>
+    <p class="muted">每座城里的小小作品，都在这里。</p><div id="legacy-tools" class="legacy-tools" hidden><p id="legacy-count"></p><button id="select-legacy" class="quiet-button">全选待归属</button><button id="assign-legacy" class="primary-button small" disabled>选择归属城市</button></div><div id="collection-list" class="collection-list"></div>
   </dialog>
   <dialog id="settings" class="modal settings">
     <div class="modal-header"><div><p class="eyebrow">MAKE YOURSELF AT HOME</p><h2>这片星空，听你的</h2></div><button class="icon-button" data-close="settings" aria-label="关闭偏好设置"><span data-icon="close"></span></button></div>
@@ -94,6 +116,25 @@
     <label class="setting-row"><span><strong>展示示例作品</strong><small>示例与自己的作品分别标记</small></span><input id="show-samples" type="checkbox" role="switch" checked></label>
     <p class="local-notice"><span>✧</span> 这是本地试玩版。内容不会上传；不同设备、浏览器、无痕窗口之间不会同步。清除网站数据会删除作品。</p>
     <p id="settings-error" class="inline-error" role="alert" hidden></p>
+  </dialog>
+
+  <dialog id="city-picker" class="modal city-picker">
+    <div class="modal-header"><div><p class="eyebrow">SOMEWHERE ON THIS LITTLE EARTH</p><h2 id="city-picker-title">想去哪里看看？</h2></div><button class="icon-button" data-close="city-picker" aria-label="关闭城市选择"><span data-icon="close"></span></button></div>
+    <label for="city-query" class="sr-only">搜索城市名称或别名</label><input id="city-query" class="city-query" type="search" placeholder="搜索城市，比如南京 / Nanjing" autocomplete="off">
+    <button id="locate-city" class="quiet-button locate-button"><span data-icon="locate"></span> 定位我的城市</button>
+    <p id="city-search-hint" class="muted">选择一座城，给心事一个落脚的地方。</p><div id="city-results" class="city-results"></div><p id="location-error" class="inline-error" role="alert" hidden></p>
+    <p class="city-data-note">只显示城市级位置 · GeoNames 城市目录</p>
+  </dialog>
+  <dialog id="marker-editor" class="modal marker-editor">
+    <form id="marker-form" novalidate>
+      <div class="modal-header"><div><p class="eyebrow">A TINY COVER FOR YOUR WORDS</p><h2>给它一个可爱标签</h2></div><button type="button" class="icon-button" data-close="marker-editor" aria-label="关闭标签编辑"><span data-icon="close"></span></button></div>
+      <div id="marker-presets" class="marker-presets"></div>
+      <div class="marker-fields"><label>自选表情<input id="marker-emoji" maxlength="40" placeholder="例如 🐼"></label><label>短标题 · 最多 6 字<input id="marker-title" maxlength="80" placeholder="例如 晚风来信"></label></div>
+      <fieldset><legend>标签颜色</legend><div id="marker-colors" class="color-picker"></div></fieldset>
+      <button id="marker-city-select" type="button" class="publish-city quiet-button" hidden>选择归属城市</button>
+      <p id="marker-error" class="inline-error" role="alert" hidden></p>
+      <div class="modal-footer"><span id="marker-live-preview" class="marker-live-preview">⭐ 小小星光</span><button class="primary-button" type="submit">使用这个标签</button></div>
+    </form>
   </dialog>
   <script type="module" src="/src/app.js"></script>
 </body>

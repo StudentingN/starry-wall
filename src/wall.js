@@ -1,3 +1,4 @@
+import { markerIcon } from './geo.js';
 import { WORLD, clamp, constrainCamera, screenToWorld, zoomAt } from './core.js';
 export function paintStroke(ctx, stroke, offset = { x: 0, y: 0 }) {
   if (!stroke.points.length) return;
@@ -8,7 +9,7 @@ export function paintStroke(ctx, stroke, offset = { x: 0, y: 0 }) {
 export class Wall {
   constructor(element, callbacks = {}) {
     this.element = element; this.layer = element.querySelector('.world-layer'); this.canvas = element.querySelector('canvas'); this.ctx = this.canvas.getContext('2d'); this.callbacks = callbacks;
-    this.camera = { x: 3000, y: 2000, zoom: matchMedia('(max-width: 600px)').matches ? .78 : 1 }; this.size = { width: 1, height: 1 }; this.entries = []; this.draft = []; this.current = null; this.pointers = new Map(); this.mode = 'browse'; this.color = '#efae7f'; this.width = 3; this.frame = 0;
+    this.camera = { x: 3000, y: 2000, zoom: matchMedia('(max-width: 600px)').matches ? .78 : 1 }; this.size = { width: 1, height: 1 }; this.entries = []; this.entryById=new Map(); this.nodes=new Map(); this.draft = []; this.current = null; this.pointers = new Map(); this.mode = 'browse'; this.color = '#efae7f'; this.width = 3; this.frame = 0;
     this.stars = Array.from({length: 500}, (_, i) => ({ x: (i * 7919 % 6000), y: (i * 3571 % 4000), r: i % 17 === 0 ? 1.6 : .65, alpha: .12 + (i % 7) * .035 }));
     new ResizeObserver(() => this.resize()).observe(element); this.events(); this.resize();
   }
@@ -19,8 +20,9 @@ export class Wall {
     this.camera = constrainCamera(this.camera, this.size); this.requestRender();
   }
   setEntries(entries) {
-    this.entries = entries; this.layer.replaceChildren();
-    for (const entry of entries) {
+    this.entries = entries; this.entryById = new Map(entries.map(entry=>[entry.id,entry])); this.nodes = new Map(); this.layer.replaceChildren(); this.requestRender();
+  }
+  createEntryNode(entry) {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.entryId = entry.id;
       button.className = 'wall-entry ' + (entry.kind === 'drawing' ? 'drawing-hit' : entry.category);
       button.style.left = entry.x + 'px'; button.style.top = entry.y + 'px'; button.style.setProperty('--entry-color', entry.color); button.style.setProperty('--entry-rotation', entry.rotation + 'deg');
@@ -30,10 +32,10 @@ export class Wall {
         if (entry.category === 'blessing') { const star = document.createElement('span'); star.className = 'wish-star'; star.textContent = entry.caught ? '✦' : '✧'; button.append(star); }
         const content = document.createElement('span'); content.textContent = entry.text; button.append(content);
       }
+      const cover=document.createElement('span');cover.className='entry-cover';const glyph=document.createElement('i');glyph.textContent=markerIcon(entry.marker);const title=document.createElement('b');title.textContent=entry.marker?.title||'';cover.style.color=entry.marker?.color||entry.color;cover.append(glyph,title);button.prepend(cover);
       const tag = document.createElement('span'); tag.className = 'entry-tag'; tag.textContent = entry.sample ? '示例作品 · 点击看看' : '我留下的' + (entry.category === 'blessing' ? '祝福' : '作品'); button.append(tag);
-      button.addEventListener('click', event => { if (event.detail === 0 && this.mode === 'browse') this.callbacks.onSelect?.(entry); }); this.layer.append(button);
-    }
-    this.requestRender();
+      button.addEventListener('click', event => { if (event.detail === 0 && this.mode === 'browse') this.callbacks.onSelect?.(entry); }); 
+    return button;
   }
   setMode(mode) {
     if (this.current) { this.current = null; this.requestRender(); }
@@ -47,7 +49,7 @@ export class Wall {
   zoom(factor, point = { x: this.size.width / 2, y: this.size.height / 2 }) { this.camera = zoomAt(this.camera, this.size, point, factor); this.requestRender(); }
   center() { this.camera = { x: 3000, y: 2000, zoom: matchMedia('(max-width: 600px)').matches ? .78 : 1 }; this.camera = constrainCamera(this.camera, this.size); this.requestRender(); }
   focusEntry(entry) { this.camera = constrainCamera({ x: entry.x + entry.width / 2, y: entry.y + entry.height / 2, zoom: Math.min(1.2, (this.size.width - 60) / Math.max(entry.width, 280)) }, this.size); this.requestRender(); }
-  pulse(id) { const node = this.layer.querySelector('[data-entry-id="' + CSS.escape(id) + '"]'); if (node) { node.classList.remove('entry-pulse'); requestAnimationFrame(() => node.classList.add('entry-pulse')); } }
+  pulse(id) { requestAnimationFrame(()=>{const node=this.nodes.get(id);if(node){node.classList.remove('entry-pulse');requestAnimationFrame(()=>node.classList.add('entry-pulse'));}}); }
   requestRender() { if (!this.frame) this.frame = requestAnimationFrame(() => { this.frame = 0; this.render(); }); }
   render() {
     const { width, height } = this.size, { x, y, zoom } = this.camera, ctx = this.ctx, dpr = this.dpr;
@@ -55,11 +57,14 @@ export class Wall {
     const visible = entry => entry.x + (entry.width || 1) >= x - width / 2 / zoom - 30 && entry.x <= x + width / 2 / zoom + 30 && entry.y + (entry.height || 1) >= y - height / 2 / zoom - 30 && entry.y <= y + height / 2 / zoom + 30;
     for (const star of this.stars) { if (!visible(star)) continue; ctx.globalAlpha = star.alpha; ctx.fillStyle = '#d8d7c9'; ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2); ctx.fill(); }
     ctx.globalAlpha = 1;
+    const visibleIds=new Set();
     for (const entry of this.entries) {
-      const node = this.layer.querySelector('[data-entry-id="' + CSS.escape(entry.id) + '"]');
-      if (node) node.hidden = !visible(entry);
-      if (entry.kind === 'drawing' && visible(entry)) for (const stroke of entry.strokes) paintStroke(ctx, stroke, entry);
+      if(!visible(entry))continue;visibleIds.add(entry.id);
+      if(!this.nodes.has(entry.id)){const node=this.createEntryNode(entry);this.nodes.set(entry.id,node);this.layer.append(node);}
+      if(entry.kind==='drawing')for(const stroke of entry.strokes)paintStroke(ctx,stroke,entry);
     }
+    for(const[id,node]of this.nodes){if(!visibleIds.has(id)){node.remove();this.nodes.delete(id);}}
+    this.element.dataset.visibleEntries=String(visibleIds.size);
     for (const stroke of this.draft) paintStroke(ctx, stroke); if (this.current) paintStroke(ctx, this.current);
     this.layer.style.transform = 'translate(' + (width / 2 - x * zoom) + 'px,' + (height / 2 - y * zoom) + 'px) scale(' + zoom + ')';
     this.callbacks.onCamera?.(this.camera);
@@ -101,7 +106,7 @@ export class Wall {
       if (!this.pointers.has(event.pointerId)) return;
       if (this.pointers.size === 1 && !this.pinch) {
         if (this.current && !canceled) this.callbacks.onStroke?.(this.current);
-        else if (!canceled && !this.moved && this.mode === 'browse' && this.tapEntry) this.callbacks.onSelect?.(this.entries.find(entry => entry.id === this.tapEntry));
+        else if (!canceled && !this.moved && this.mode === 'browse' && this.tapEntry) this.callbacks.onSelect?.(this.entryById.get(this.tapEntry));
       }
       this.current = null; this.pointers.delete(event.pointerId); this.element.classList.remove('dragging');
       if (!this.pointers.size) this.pinch = null;

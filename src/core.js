@@ -1,3 +1,4 @@
+import { normalizeMarker, UNASSIGNED } from './geo.js';
 export const WORLD = { width: 6000, height: 4000 };
 export const PALETTE = ['#efae7f', '#e9bdca', '#a5badc', '#b8c7a2', '#dfc786', '#eee8dd'];
 export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -44,12 +45,12 @@ export function makeDrawing(strokes) {
 export function normalizeEntry(value) {
   if (!value || typeof value.id !== 'string' || !value.id || !['text', 'drawing'].includes(value.kind)) throw new Error('作品格式不正确。');
   if (![value.x, value.y, value.createdAt].every(Number.isFinite) || value.x < -30 || value.x > WORLD.width || value.y < -30 || value.y > WORLD.height) throw new Error('作品位置不正确。');
-  const base = { id: value.id, kind: value.kind, x: value.x, y: value.y, createdAt: value.createdAt, color: PALETTE.includes(value.color) ? value.color : PALETTE[0], sample: Boolean(value.sample), caught: Boolean(value.caught), rotation: clamp(Number(value.rotation) || 0, -12, 12) };
+  const base = { cityId: typeof value.cityId === 'string' && value.cityId ? value.cityId : UNASSIGNED, marker: normalizeMarker(value.marker, value.color, value.category), id: value.id, kind: value.kind, x: value.x, y: value.y, createdAt: value.createdAt, color: PALETTE.includes(value.color) ? value.color : PALETTE[0], sample: Boolean(value.sample), caught: Boolean(value.caught), rotation: clamp(Number(value.rotation) || 0, -12, 12) };
   if (value.kind === 'text') {
     const text = String(value.text ?? '').trim();
     if (!text || textLength(text) > 120) throw new Error('请写下 1–120 个字。');
     const category = ['daily', 'love', 'blessing'].includes(value.category) ? value.category : 'daily';
-    return { ...base, text, category, effect: category === 'blessing' && ['fireworks', 'meteors'].includes(value.effect) ? value.effect : 'none', width: 280, height: 155 };
+    return { ...base, text, category, effect: category === 'blessing' && ['fireworks', 'meteors'].includes(value.effect) ? value.effect : 'none', width: 280, height: 200 };
   }
   if (!Array.isArray(value.strokes) || !value.strokes.length || value.strokes.length > 2000 || !Number.isFinite(value.width) || !Number.isFinite(value.height) || value.width <= 0 || value.height <= 0 || value.width > WORLD.width + 30 || value.height > WORLD.height + 30) throw new Error('涂鸦数据不正确。');
   let totalPoints = 0;
@@ -68,8 +69,8 @@ export function normalizeEntry(value) {
 export function findPlacement(entries, center) {
   for (let i = 0; i < 80; i++) {
     const angle = i * 2.39996, radius = Math.sqrt(i) * 85;
-    const point = { x: clamp(center.x - 140 + Math.cos(angle) * radius, 20, WORLD.width - 300), y: clamp(center.y - 70 + Math.sin(angle) * radius, 20, WORLD.height - 180) };
-    if (!entries.some(entry => point.x < entry.x + entry.width + 20 && point.x + 300 > entry.x && point.y < entry.y + entry.height + 20 && point.y + 175 > entry.y)) return point;
+    const point = { x: clamp(center.x - 140 + Math.cos(angle) * radius, 20, WORLD.width - 300), y: clamp(center.y - 70 + Math.sin(angle) * radius, 20, WORLD.height - 220) };
+    if (!entries.some(entry => point.x < entry.x + entry.width + 20 && point.x + 300 > entry.x && point.y < entry.y + entry.height + 20 && point.y + 220 > entry.y)) return point;
   }
-  return { x: clamp(center.x - 140, 20, WORLD.width - 300), y: clamp(center.y - 70, 20, WORLD.height - 180) };
+  return { x: clamp(center.x - 140, 20, WORLD.width - 300), y: clamp(center.y - 70, 20, WORLD.height - 220) };
 }
