@@ -1,13 +1,17 @@
 {
   "name": "starry-wall",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "今夜留一句 · a local-first graffiti and wishing wall",
-  "engines": { "node": ">=22" },
+  "description": "今夜留一句 · a local-first globe of city graffiti and wishes",
+  "engines": { "node": ">=22.12.0" },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "test": "node --test",
     "test:browser": "node scripts/browser-smoke.mjs"
-  }
+  },
+  "dependencies": { "globe.gl": "2.46.2" },
+  "devDependencies": { "vite": "8.3.4" }
 }
