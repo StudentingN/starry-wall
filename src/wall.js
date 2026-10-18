@@ -8,7 +8,7 @@ export function paintStroke(ctx, stroke, offset = { x: 0, y: 0 }) {
 export class Wall {
   constructor(element, callbacks = {}) {
     this.element = element; this.layer = element.querySelector('.world-layer'); this.canvas = element.querySelector('canvas'); this.ctx = this.canvas.getContext('2d'); this.callbacks = callbacks;
-    this.camera = { x: 3000, y: 2000, zoom: 1 }; this.size = { width: 1, height: 1 }; this.entries = []; this.draft = []; this.current = null; this.pointers = new Map(); this.mode = 'browse'; this.color = '#efae7f'; this.width = 3; this.frame = 0;
+    this.camera = { x: 3000, y: 2000, zoom: matchMedia('(max-width: 600px)').matches ? .78 : 1 }; this.size = { width: 1, height: 1 }; this.entries = []; this.draft = []; this.current = null; this.pointers = new Map(); this.mode = 'browse'; this.color = '#efae7f'; this.width = 3; this.frame = 0;
     this.stars = Array.from({length: 500}, (_, i) => ({ x: (i * 7919 % 6000), y: (i * 3571 % 4000), r: i % 17 === 0 ? 1.6 : .65, alpha: .12 + (i % 7) * .035 }));
     new ResizeObserver(() => this.resize()).observe(element); this.events(); this.resize();
   }
@@ -45,7 +45,7 @@ export class Wall {
   local(event) { const r = this.element.getBoundingClientRect(); return { x: event.clientX - r.left, y: event.clientY - r.top }; }
   world(point) { const p = screenToWorld(point, this.camera, this.size); return { x: clamp(p.x, 1, WORLD.width - 1), y: clamp(p.y, 1, WORLD.height - 1) }; }
   zoom(factor, point = { x: this.size.width / 2, y: this.size.height / 2 }) { this.camera = zoomAt(this.camera, this.size, point, factor); this.requestRender(); }
-  center() { this.camera = { x: 3000, y: 2000, zoom: 1 }; this.camera = constrainCamera(this.camera, this.size); this.requestRender(); }
+  center() { this.camera = { x: 3000, y: 2000, zoom: matchMedia('(max-width: 600px)').matches ? .78 : 1 }; this.camera = constrainCamera(this.camera, this.size); this.requestRender(); }
   focusEntry(entry) { this.camera = constrainCamera({ x: entry.x + entry.width / 2, y: entry.y + entry.height / 2, zoom: Math.min(1.2, (this.size.width - 60) / Math.max(entry.width, 280)) }, this.size); this.requestRender(); }
   pulse(id) { const node = this.layer.querySelector('[data-entry-id="' + CSS.escape(id) + '"]'); if (node) { node.classList.remove('entry-pulse'); requestAnimationFrame(() => node.classList.add('entry-pulse')); } }
   requestRender() { if (!this.frame) this.frame = requestAnimationFrame(() => { this.frame = 0; this.render(); }); }
@@ -68,6 +68,7 @@ export class Wall {
     this.element.addEventListener('wheel', event => { event.preventDefault(); if (this.current) return; this.zoom(Math.exp(-event.deltaY * .0015), this.local(event)); }, { passive: false });
     this.element.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
+      event.preventDefault();
       const point = this.local(event); this.element.focus({ preventScroll: true }); this.element.setPointerCapture(event.pointerId);
       this.pointers.set(event.pointerId, point);
       if (this.pointers.size === 1) {

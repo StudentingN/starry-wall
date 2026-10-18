@@ -3,6 +3,7 @@ import { samples } from './samples.js';
 import { Wall, paintStroke } from './wall.js';
 import { hydrateIcons, icon } from './icons.js';
 import { storage } from './storage.js';
+import { Celebration, Danmaku } from './effects.js';
 
 const $ = selector => document.querySelector(selector);
 hydrateIcons();
@@ -124,7 +125,7 @@ $('#compose-form').addEventListener('submit', async event => {
     $('#composer').close(); $('#message').value = ''; categoryManual = false; setCategory('daily'); updateMessage(); wall.focusEntry(entry);
     toast(entry.category === 'blessing' ? '祝福已留在墙上，愿它抵达。' : '已经留下啦，今晚多了一点星光。');
     if (entry.category === 'blessing' && entry.effect !== 'none') {
-      if (!celebration.active) celebration.play(entry, preferences).then(() => wall.pulse(entry.id));
+      if (!celebration.active) { danmaku.stop(); celebration.play(entry, preferences).then(() => wall.pulse(entry.id)); }
     } else danmaku.flash(entry);
   } catch (error) { errorIn('#compose-error', '没有保存成功，草稿已保留。' + error.message); }
   finally { busy(false); }
@@ -179,7 +180,7 @@ function showDetail(entry) {
       } catch (error) { errorIn('#detail-error', '没有保存成功，请重试。' + error.message); }
       finally { saving = false; }
     }, 'primary-button'));
-    if (entry.effect !== 'none') actions.append(action('重播', 'play', () => { if (celebration.active) { toast('等这场祝福结束，再送下一场吧。'); return; } $('#detail').close(); wall.focusEntry(entry); celebration.play(entry, preferences).then(() => wall.pulse(entry.id)); }));
+    if (entry.effect !== 'none') actions.append(action('重播', 'play', () => { if (celebration.active) { toast('等这场祝福结束，再送下一场吧。'); return; } $('#detail').close(); wall.focusEntry(entry); danmaku.stop(); celebration.play(entry, preferences).then(() => wall.pulse(entry.id)); }));
   }
   if (!entry.sample) actions.append(action('删除', 'trash', async () => {
     if (saving) return;
@@ -199,10 +200,10 @@ function syncSettings() {
 for (const [selector, key] of [['#reduced-motion', 'reducedMotion'], ['#sound-enabled', 'sound'], ['#show-samples', 'showSamples']]) {
   $(selector).onchange = async event => {
     const next = { ...preferences, [key]: event.target.checked };
-    event.target.disabled = true; errorIn('#settings-error', '');
-    try { await ensureLoaded(); await storage.savePreferences(next); preferences = next; if (key === 'reducedMotion' && next[key]) celebration.stop(); refresh(); syncSettings(); }
+    document.querySelectorAll('.setting-row input').forEach(input => input.disabled = true); errorIn('#settings-error', '');
+    try { await ensureLoaded(); await storage.savePreferences(next); preferences = next; if (key === 'reducedMotion' && next[key]) { celebration.stop(); danmaku.stop(); } refresh(); syncSettings(); }
     catch (error) { syncSettings(); errorIn('#settings-error', '设置未保存，请重试。' + error.message); }
-    finally { event.target.disabled = false; }
+    finally { document.querySelectorAll('.setting-row input').forEach(input => input.disabled = false); }
   };
 }
 motionQuery.addEventListener('change', event => {
@@ -232,12 +233,8 @@ document.addEventListener('keydown', event => {
 });
 refresh();
 await loadData();
-// Effect implementations are connected separately from creation and storage.
-try {
-  const module = await import('./effects.js');
-  celebration = new module.Celebration($('#celebration'));
-  danmaku = new module.Danmaku($('#danmaku-layer'), $('#danmaku-toggle'), () => preferences.reducedMotion);
-  danmaku.update(currentEntries().filter(entry => entry.kind === 'text'));
-} catch (error) {
-  if (!error.message.includes('Failed to fetch') && !error.message.includes('404')) console.info('祝福效果模块尚未加载。');
-}
+celebration = new Celebration($('#celebration'));
+danmaku = new Danmaku($('#danmaku-layer'), $('#danmaku-toggle'), () => preferences.reducedMotion);
+danmaku.update(currentEntries().filter(entry => entry.kind === 'text'));
+
+document.documentElement.dataset.ready = 'true';

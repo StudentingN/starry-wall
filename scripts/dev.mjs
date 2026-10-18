@@ -1,9 +1,9 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { resolve, sep, extname } from 'node:path';
+import { resolve, sep, extname, relative as relativePath } from 'node:path';
 
-const root = fileURLToPath(new URL('../', import.meta.url));
+const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const allowed = new Set(['index.html', 'src', 'assets']);
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 const server = createServer(async (req, res) => {
@@ -12,7 +12,7 @@ const server = createServer(async (req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
     const target = resolve(root, relative);
-    if (!target.startsWith(root + sep) || !allowed.has(relative.split('/')[0]) || !(await stat(target)).isFile()) {
+    if (!target.startsWith(root + sep) || !allowed.has(relativePath(root, target).split(sep)[0]) || !(await stat(target)).isFile()) {
       res.writeHead(404); res.end('Not found'); return;
     }
     const body = await readFile(target);
